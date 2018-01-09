@@ -14,7 +14,7 @@ const Util = require('./modules/util')();
 const System = java.import('java.lang.System');
 const Main = java.import('net.minecraft.client.main.Main');
 
-Main.main(java.newArray('java.lang.String', ['--version', 'mcp', '--accessToken', '0', '--assetsDir', 'assets', '--assetIndex', '1.12', '--userProperties', '{}']));
+Main.main(java.newArray('java.lang.String', ['--version', 'nodejs', '--accessToken', '0', '--assetsDir', 'assets', '--assetIndex', '1.12', '--userProperties', '{}']));
 
 async function run() {
 	while (true) {
