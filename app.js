@@ -4,11 +4,24 @@ const Util = require('./modules/util')();
 
 var running = true;
 
+var getShutdownThread = () => {
+    var proxy = Util.getJvm().newProxy('java.lang.Runnable', {
+        run: () => {
+            console.log('Client shutting down');
+            running = false;
+        }
+    });
+    return Util.getJvm().newInstanceSync('java.lang.Thread', proxy);
+};
+    
+
 async function startClient() {
     var Runtime = Util.importClass('java.lang.Runtime');
     var System = Util.importClass('java.lang.System');
     var Main = Util.importClass('net.minecraft.client.main.Main');
     
+    Runtime.getRuntimeSync().addShutdownHook(getShutdownThread());
+
     Main.main(Util.getJvm().newArray('java.lang.String', ['--version', 'udp', '--accessToken', '0', '--assetsDir', 'assets', '--assetIndex', '1.12', '--userProperties', '{}']));
 
     while (running) {
