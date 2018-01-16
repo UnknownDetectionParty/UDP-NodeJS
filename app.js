@@ -22,7 +22,7 @@ async function startClient() {
     
     Runtime.getRuntimeSync().addShutdownHook(getShutdownThread());
 
-    Main.main(Util.getJvm().newArray('java.lang.String', ['--version', 'udp', '--accessToken', '0', '--assetsDir', 'assets', '--assetIndex', '1.12', '--userProperties', '{}']));
+    Main.main(Util.getJvm().newArray('java.lang.String', ['--version', 'udp', '--accessToken', '0', '--assetsDir', 'assets', '--assetIndex', Util.VERSION, '--userProperties', '{}']));
 
     while (running) {
         var mc = Util.getJvm().callStaticMethodSync(
