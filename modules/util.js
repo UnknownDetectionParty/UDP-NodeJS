@@ -1,8 +1,94 @@
+const fs = require('fs');
+const appdata = require('appdata-path');
+const java = require('java');
+const Zip = require('adm-zip');
+
 module.exports = () => {
     var module = {};
+    var mapping = {};
+    var classes = {};
+
+    module.ABSOLUTE = `${appdata.getAppDataPath()}/.minecraft`;
+    module.VERSION = '1.11';
+    module.LIB_DIR = 'libraries';
+    module.VER_DIR = `versions/${module.VERSION}`;
+    module.NAT_DIR = `${module.VER_DIR}/${module.VERSION}-natives`;
+    module.MAP_FILE = `./mappings/${module.VERSION}.json`;
+
+    module.getAbsolute = (dir) => {
+        return `${module.ABSOLUTE}/${dir}`;
+    };
+
+    module.setupJVM = () => {
+        if (fs.existsSync(module.MAP_FILE))
+            mapping = JSON.parse(fs.readFileSync(module.MAP_FILE));
+
+        java.options.push(`-Djava.library.path=${module.NAT_DIR}`);
+        java.classpath.push(`${module.getAbsolute(module.VER_DIR)}/${module.VERSION}.jar`);
+
+        var json = JSON.parse(fs.readFileSync(`${module.getAbsolute(module.VER_DIR)}/${module.VERSION}.json`))
+        if (json.libraries)
+            json.libraries.forEach((lib) => {
+                if (lib) {
+                    if (lib.downloads && lib.downloads.artifact && lib.downloads.artifact.path)
+                        if (fs.existsSync(`${module.getAbsolute(module.LIB_DIR)}/${lib.downloads.artifact.path}`))
+                            java.classpath.push(`${module.getAbsolute(module.LIB_DIR)}/${lib.downloads.artifact.path}`);
+                    if (lib.extract && lib.natives) {
+                        var natives = [lib.natives.linux, lib.natives.osx, lib.natives.windows];
+                        natives.forEach((native) => {
+                            if (native && lib.downloads && lib.downloads.classifiers && lib.downloads.classifiers[native] && lib.downloads.classifiers[native].path && fs.existsSync(`${module.getAbsolute(module.LIB_DIR)}/${lib.downloads.classifiers[native].path}`))
+                                new Zip(`${module.getAbsolute(module.LIB_DIR)}/${lib.downloads.classifiers[native].path}`).extractAllTo(`${module.getAbsolute(module.NAT_DIR)}`, true);
+                        });
+                    }
+                }
+            });
+    };
+
+    module.getJvm = () => {
+        return java;
+    };
+
+    module.importClass = (cls) => {
+        if (classes[cls])
+            return classes[cls];
+        return classes[cls] = java.import(module.mapClass(cls));
+    };
+
+    module.mapClass = (cls) => {
+        var _cls = mapping[cls];
+        return _cls ? mapping[cls].obf : cls;
+    };
+
+    module.mapField = (cls, fld) => {
+        var _cls = mapping[cls];
+        return _cls ? _cls.fields[`${fld}`] : fld;
+    };
+
+    module.mapMethod = (cls, mtd, sig) => {
+        var _cls = mapping[cls];
+        return _cls ? _cls.methods[`${mtd}:${sig}`] + module.convertSig(sig) : mtd;
+    };
+
+    module.getPrivateFieldValue = (obj, fld) => {
+        if (!obj || !fld) {
+            console.log(`Failed to get private field ${fld} value for ${obj}`);
+            return null;
+        }
+        return obj.getClassSync().getDeclaredFieldSync(fld).getSync(obj);
+    };
+
+    module.convertSig = (sig) => {
+        for (var key in mapping)
+            sig = module.replaceAll(sig, `L${key};`, `L${module.mapClass(key)};`);
+        return sig;
+    };
+
+    module.replaceAll = (input, search, replace) => {
+        return input.split(search).join(replace);
+    };
 
     module.sleep = (ms) => {
-        return  new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise(r => setTimeout(r, ms));
     };
 
     return module;
