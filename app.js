@@ -1,30 +1,18 @@
 const fs = require('fs');
-const java = require('java');
 
-const Util = require('./modules/util')(java);
+const Util = require('./modules/util')();
 
 var running = true;
-
-var getShutdownThread = () => {
-    var proxy = java.newProxy('java.lang.Runnable', {
-        run: () => {
-            console.log('Client shutting down');
-            running = false;
-        }
-    });
-    return java.newInstanceSync('java.lang.Thread', proxy);
-};
 
 async function startClient() {
     var Runtime = Util.importClass('java.lang.Runtime');
     var System = Util.importClass('java.lang.System');
     var Main = Util.importClass('net.minecraft.client.main.Main');
     
-    Runtime.getRuntimeSync().addShutdownHook(getShutdownThread());
-    Main.main(java.newArray('java.lang.String', ['--version', 'udp', '--accessToken', '0', '--assetsDir', 'assets', '--assetIndex', '1.12', '--userProperties', '{}']));
+    Main.main(Util.getJvm().newArray('java.lang.String', ['--version', 'udp', '--accessToken', '0', '--assetsDir', 'assets', '--assetIndex', '1.12', '--userProperties', '{}']));
 
     while (running) {
-        var mc = java.callStaticMethodSync(
+        var mc = Util.getJvm().callStaticMethodSync(
             Util.mapClass('net/minecraft/client/Minecraft'),
             Util.mapMethod(
                 'net/minecraft/client/Minecraft',
@@ -37,13 +25,13 @@ async function startClient() {
                 'net/minecraft/client/Minecraft',
                 'currentScreen'
             )];
-            if (currentScreen && java.instanceOf(currentScreen, Util.mapClass('net/minecraft/client/gui/GuiChat'))) {
+            if (currentScreen && Util.getJvm().instanceOf(currentScreen, Util.mapClass('net/minecraft/client/gui/GuiChat'))) {
                 var inputField = Util.getPrivateFieldValue(currentScreen, Util.mapField(
                     'net/minecraft/client/gui/GuiChat',
                     'inputField'
                 ));
                 if (inputField) {
-                    var text = java.callMethodSync(
+                    var text = Util.getJvm().callMethodSync(
                         inputField,
                         Util.mapMethod(
                             'net/minecraft/client/gui/GuiTextField',
@@ -53,7 +41,7 @@ async function startClient() {
                     );
                     if (text && text.startsWith('%%:') && text.endsWith(':%%')) {
                         var command = text.substring('%%:'.length, text.length - ':%%'.length)
-                        java.callMethodSync(
+                        Util.getJvm().callMethodSync(
                             inputField,
                             Util.mapMethod('net/minecraft/client/gui/GuiTextField', 'setText', '(Ljava/lang/String;)V'),
                             ''
@@ -63,7 +51,7 @@ async function startClient() {
                             'ingameGUI'
                         )];
                         if (guiIngame) {
-                            var chatGui = java.callMethodSync(
+                            var chatGui = Util.getJvm().callMethodSync(
                                 guiIngame,
                                 Util.mapMethod(
                                     'net/minecraft/client/gui/GuiIngame',
@@ -72,8 +60,8 @@ async function startClient() {
                                 )
                             );
                             if (chatGui) {
-                                var component = java.newInstanceSync(Util.mapClass('net/minecraft/util/text/TextComponentString'), Util.replaceAll(command, '&', '\247'));
-                                java.callMethodSync(
+                                var component = Util.getJvm().newInstanceSync(Util.mapClass('net/minecraft/util/text/TextComponentString'), Util.replaceAll(command, '&', '\247'));
+                                Util.getJvm().callMethodSync(
                                     chatGui,
                                     Util.mapMethod(
                                         'net/minecraft/client/gui/GuiNewChat',
