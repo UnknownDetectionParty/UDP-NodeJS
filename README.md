@@ -15,55 +15,40 @@ Happy skidding!
   - NodeJS and NPM
   - JDK
   - Minecraft 1.12 or 1.11 (Current mappings are for 1.11-1.12) (Or provide mappings in the correct format for other versions)
-  - Node Packages: `fs`, `java`, `appdata-path`, `adm-zip`
 
 ### Getting Started
 
   - If you haven't already, install NodeJS, NPM, and Python 2.x
   - Create a new directory for the project
   - Open a terminal in the root of your project (cmd, bash, whatever)
-  - Run `npm install fs`
-  - Run `npm install java`
-  - Run `npm install appdata-path`
-  - Run `npm install adm-zip`
+  - Run `npm install`
   - Create a new file called `app.js`, this will be the main file, and put the following inside:
     ```js
-    //Import the required libraries
     const fs = require('fs');
     const Util = require('./modules/util')();
     
-    //To know when to shut down
     var running = true;
     
-    //Create a new thread for when the jvm is shutting down
     var getShutdownThread = () => {
         var proxy = Util.getJvm().newProxy('java.lang.Runnable', { run: () => { running = false; } });
         return Util.getJvm().newInstanceSync('java.lang.Thread', proxy);
     };
     
-    //Start Minecraft
     var startClient = () => {
-        //Import the Runtime and Main classes
         var Runtime = Util.importClass('java.lang.Runtime');
         var Main = Util.importClass('net.minecraft.client.main.Main');
         
-        //Add to the jvm shutdown hook
         Runtime.getRuntimeSync().addShutdownHook(getShutdownThread());
         
-        //Launch Minecraft
         Main.main(Util.getJvm().newArray('java.lang.String', ['--version', 'udp', '--accessToken', '0', '--assetsDir', 'assets', '--assetIndex', Util.VERSION, '--userProperties', '{}']));
     };
     
-    //Initialization
     var launch = () => {
-        //Sets up jvm options + classpath
         Util.setupJVM();
         
-        //Makes sure you have Minecraft installed (.minecraft)
         if (!fs.existsSync(Util.ABSOLUTE))
             return;
         
-        //Set the working dir to '.minecraft'
         process.chdir(Util.ABSOLUTE);
         
         startClient();

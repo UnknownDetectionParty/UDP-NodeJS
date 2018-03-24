@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "adm-zip": "^0.4.7",
+    "appdata-path": "^0.1.2",
+    "fs": "0.0.1-security",
+    "java": "^0.9.1",
+    "prompt-sync": "^4.1.6",
+    "yggdrasil": "^1.1.1"
+  }
+}

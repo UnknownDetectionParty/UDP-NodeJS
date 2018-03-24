@@ -9,7 +9,7 @@ module.exports = () => {
     var classes = {};
 
     module.ABSOLUTE = `${appdata.getAppDataPath()}/.minecraft`;
-    module.VERSION = '1.11';
+    module.VERSION = '1.12';
     module.LIB_DIR = 'libraries';
     module.VER_DIR = `versions/${module.VERSION}`;
     module.NAT_DIR = `${module.VER_DIR}/${module.VERSION}-natives`;
@@ -89,6 +89,31 @@ module.exports = () => {
 
     module.sleep = (ms) => {
         return new Promise(r => setTimeout(r, ms));
+    };
+
+    module.radtodeg = (x) => {
+        return x * 180.0 / Math.PI;
+    };
+
+    module.distanceXY = (x, y) => {
+        return Math.hypot(x, y);
+    };
+
+    module.distanceXYZ = (x1, y1, z1, x2, y2, z2) => {
+        return module.distanceXY(y1 - y2, module.distanceXY(x1 - x2, z1 - z2));
+    };
+
+    module.directionXY = (x1, y1, x2, y2) => {
+        return module.radtodeg(Math.atan2(y2 - y1, x2 - y1));
+    };
+
+    module.directionXYZ = (x1, y1, z1, x2, y2, z2) => {
+        var dx = x2 - x1;
+        var dy = y2 - y1;
+        var dz = z2 - z1;
+        var yaw = module.radtodeg(Math.atan2(dz, dx)) - 90;
+        var pitch = -module.radtodeg(Math.atan2(dy, module.distanceXY(dx, dz)));
+        return [yaw, pitch];
     };
 
     return module;
