@@ -9,11 +9,13 @@ module.exports = () => {
     var classes = {};
 
     module.ABSOLUTE = `${appdata.getAppDataPath()}/.minecraft`;
-    module.VERSION = '1.12';
+    module.VERSION = '1.13';
     module.LIB_DIR = 'libraries';
     module.VER_DIR = `versions/${module.VERSION}`;
     module.NAT_DIR = `${module.VER_DIR}/${module.VERSION}-natives`;
     module.MAP_FILE = `./mappings/${module.VERSION}.json`;
+
+    module.LIB_DIR_INC = `lib/${module.VERSION}`;
 
     module.getAbsolute = (dir) => {
         return `${module.ABSOLUTE}/${dir}`;
@@ -26,14 +28,14 @@ module.exports = () => {
         java.options.push(`-Djava.library.path=${module.NAT_DIR}`);
         java.classpath.push(`${module.getAbsolute(module.VER_DIR)}/${module.VERSION}.jar`);
 
-        var json = JSON.parse(fs.readFileSync(`${module.getAbsolute(module.VER_DIR)}/${module.VERSION}.json`))
+        var json = JSON.parse(fs.readFileSync(`${module.getAbsolute(module.VER_DIR)}/${module.VERSION}.json`));
         if (json.libraries)
             json.libraries.forEach((lib) => {
                 if (lib) {
                     if (lib.downloads && lib.downloads.artifact && lib.downloads.artifact.path)
                         if (fs.existsSync(`${module.getAbsolute(module.LIB_DIR)}/${lib.downloads.artifact.path}`))
                             java.classpath.push(`${module.getAbsolute(module.LIB_DIR)}/${lib.downloads.artifact.path}`);
-                    if (lib.extract && lib.natives) {
+                    if (lib.natives) {
                         var natives = [lib.natives.linux, lib.natives.osx, lib.natives.windows];
                         natives.forEach((native) => {
                             if (native && lib.downloads && lib.downloads.classifiers && lib.downloads.classifiers[native] && lib.downloads.classifiers[native].path && fs.existsSync(`${module.getAbsolute(module.LIB_DIR)}/${lib.downloads.classifiers[native].path}`))
@@ -42,6 +44,9 @@ module.exports = () => {
                     }
                 }
             });
+
+        if (fs.existsSync(module.LIB_DIR_INC))
+            java.classpath.pushDir(module.LIB_DIR_INC);
     };
 
     module.getJvm = () => {
@@ -68,6 +73,11 @@ module.exports = () => {
         var _cls = mapping[cls];
         return _cls ? _cls.methods[`${mtd}:${sig}`] + module.convertSig(sig) : mtd;
     };
+
+    module.mapMethodName = (cls, mtd, sig) => {
+        var _cls = mapping[cls];
+        return _cls ? _cls.methods[`${mtd}:${sig}`] : mtd;
+    }
 
     module.getPrivateFieldValue = (obj, fld) => {
         if (!obj || !fld) {
