@@ -66,6 +66,7 @@ Happy skidding!
     
     module.exports = () => {
         var module = {};
+        var classes = {};
         
         module.ABSOLUTE = `${appdata.getAppDataPath()}/.minecraft`;
         module.VERSION = '1.12';
@@ -110,7 +111,7 @@ Happy skidding!
         module.importClass = (cls) => {
             if (classes[cls])
                 return classes[cls];
-            return classes[cls] = java.import(module.mapClass(cls));
+            return classes[cls] = java.import(cls);
         };
         
         return module;
